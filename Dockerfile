@@ -1,4 +1,4 @@
-FROM vietlam2002/kafka_spark-airflow-webserver:1.0
+FROM apache/airflow:2.9.2-python3.10
 
 COPY requirements.txt /requirements.txt
 
