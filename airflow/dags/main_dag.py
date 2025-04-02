@@ -28,4 +28,17 @@ with DAG(
         task_id="note",
         bash_command="echo 'Succesfull extract data to raw_data.csv'"
     )
-scrape_british_data >> note
+    clean_data = BashOperator(
+        task_id='clean_data_to_upload_s3',
+        bash_command="echo 'Cleaned Data'"
+    )
+    upload_cleaned_data_to_s3 = BashOperator(
+        task_id='upload_cleaned_data_to_s3',
+        bash_command="chmod -R 777 /opt/airflow/data && python /opt/aiflow/tasks/upload_to_s3.py"
+    )
+(
+    scrape_british_data 
+    >> note 
+    >> clean_data
+    >> upload_cleaned_data_to_s3
+)
