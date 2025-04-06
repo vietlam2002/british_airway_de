@@ -39,7 +39,7 @@ with DAG(
 
     snowflake_copy_operator = BashOperator(
         task_id='snowflake_copy_from_s3',
-        bash_command="pip install snowflake-connector-python python-dotenv && python /opt/airflow/tasks/upload_to_s3.py"
+        bash_command="pip install snowflake-connector-python python-dotenv && python /opt/airflow/tasks/snowflake_load.py"
     )
 (
     scrape_british_data 
