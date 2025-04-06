@@ -36,9 +36,15 @@ with DAG(
         task_id='upload_cleaned_data_to_s3',
         bash_command="chmod -R 777 /opt/airflow/data && python /opt/aiflow/tasks/upload_to_s3.py"
     )
+
+    snowflake_copy_operator = BashOperator(
+        task_id='snowflake_copy_from_s3',
+        bash_command="pip install snowflake-connector-python python-dotenv && python /opt/airflow/tasks/upload_to_s3.py"
+    )
 (
     scrape_british_data 
     >> note 
     >> clean_data
     >> upload_cleaned_data_to_s3
+    >> snowflake_copy_operator
 )
