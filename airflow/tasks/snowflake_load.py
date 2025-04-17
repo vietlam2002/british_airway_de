@@ -19,9 +19,9 @@ secret_key = config.get("aws_secret_access_key")
 cur = conn.cursor()
 
 # Tạo database/schema
-cur.execute("CREATE DATABASE IF NOT EXISTS british_db;")
-cur.execute("CREATE SCHEMA IF NOT EXISTS british_db.RAW;")
-cur.execute("CREATE SCHEMA IF NOT EXISTS british_db.MODEL;")
+cur.execute("CREATE DATABASE IF NOT EXISTS BRITISH_AIRWAYS_DB;")
+cur.execute("CREATE SCHEMA IF NOT EXISTS BRITISH_AIRWAYS_DB.RAW;")
+cur.execute("CREATE SCHEMA IF NOT EXISTS BRITISH_AIRWAYS_DB.MODEL;")
 
 # Tạo bảng (bạn có thể thêm phần CREATE TABLE nếu chưa tạo)
 csv_path = "/opt/airflow/data/clean_data.csv"
@@ -39,7 +39,7 @@ def map_dtype(dtype):
         return "STRING"
 
 # Tạo câu CREATE TABLE từ dataframe
-table_name = "british_db.RAW.BRITISH_DATA"
+table_name = "BRITISH_AIRWAYS_DB.RAW.REVIEWS"
 columns = ",\n    ".join([
     f"{col} {map_dtype(dtype)}" for col, dtype in df.dtypes.items()
 ])
@@ -49,7 +49,7 @@ cur.execute(create_table_sql)
 
 # Load dữ liệu từ S3
 cur.execute(f"""
-COPY INTO british_db.RAW.BRITISH_DATA
+COPY INTO BRITISH_AIRWAYS_DB.RAW.REVIEWS
 FROM 's3://datalakechat/clean_data.csv'
 CREDENTIALS = (
     AWS_KEY_ID='{access_key}',
