@@ -15,7 +15,7 @@ AWS_BUCKET = config.get("bucket_name")
 access_key = config.get("aws_access_key_id")
 secret_key = config.get("aws_secret_access_key")
 
-file_path = "/opt/airflow/data/raw_data.csv"
+file_path = "/opt/airflow/data/clean_data.csv"
 s3_filename = "clean_data.csv"
 
 def connect_s3():

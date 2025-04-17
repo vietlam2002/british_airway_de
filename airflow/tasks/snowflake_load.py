@@ -1,6 +1,7 @@
 from snowflake import connector
 import pathlib
 from dotenv import dotenv_values
+import pandas as pd
 
 # Load config
 script_path = pathlib.Path(__file__).parent.resolve()
@@ -23,6 +24,28 @@ cur.execute("CREATE SCHEMA IF NOT EXISTS british_db.RAW;")
 cur.execute("CREATE SCHEMA IF NOT EXISTS british_db.MODEL;")
 
 # Tạo bảng (bạn có thể thêm phần CREATE TABLE nếu chưa tạo)
+csv_path = "/opt/airflow/data/clean_data.csv"
+df = pd.read_csv(csv_path)
+def map_dtype(dtype):
+    if pd.api.types.is_integer_dtype(dtype):
+        return "INTEGER"
+    elif pd.api.types.is_float_dtype(dtype):
+        return "FLOAT"
+    elif pd.api.types.is_bool_dtype(dtype):
+        return "BOOLEAN"
+    elif pd.api.types.is_datetime64_any_dtype(dtype):
+        return "TIMESTAMP"
+    else:
+        return "STRING"
+
+# Tạo câu CREATE TABLE từ dataframe
+table_name = "british_db.RAW.BRITISH_DATA"
+columns = ",\n    ".join([
+    f"{col} {map_dtype(dtype)}" for col, dtype in df.dtypes.items()
+])
+create_table_sql = f"CREATE OR REPLACE TABLE {table_name} (\n    {columns}\n);"
+print(create_table_sql)
+cur.execute(create_table_sql)
 
 # Load dữ liệu từ S3
 cur.execute(f"""

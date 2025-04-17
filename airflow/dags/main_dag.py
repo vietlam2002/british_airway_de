@@ -29,12 +29,16 @@ with DAG(
         bash_command="echo 'Succesfull extract data to raw_data.csv'"
     )
     clean_data = BashOperator(
+        task_id='clean_data',
+        bash_command="python /opt/airflow/tasks/transform/transform.py"
+    )
+    note_clean_data = BashOperator(
         task_id='clean_data_to_upload_s3',
         bash_command="echo 'Cleaned Data'"
     )
     upload_cleaned_data_to_s3 = BashOperator(
         task_id='upload_cleaned_data_to_s3',
-        bash_command="chmod -R 777 /opt/airflow/data && python /opt/aiflow/tasks/upload_to_s3.py"
+        bash_command="chmod -R 777 /opt/airflow/data && python /opt/airflow/tasks/upload_to_s3.py"
     )
 
     snowflake_copy_operator = BashOperator(
@@ -45,6 +49,7 @@ with DAG(
     scrape_british_data 
     >> note 
     >> clean_data
+    >> note_clean_data
     >> upload_cleaned_data_to_s3
     >> snowflake_copy_operator
 )
