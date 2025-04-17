@@ -511,6 +511,21 @@ class AirlineReviewCleaner:
         logger.info("Successfully reorder all columns")
         return df
     
+    def add_updated_at_column(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Add an updated_at column with the current timestamp in YYYY-MM-DD HH:MM:SS format.
+        
+        Args:
+            df (pd.DataFrame): The DataFrame to add the updated_at column to.
+        
+        Returns:
+            pd.DataFrame: The DataFrame with the new updated_at column.
+        """
+        from datetime import datetime
+        df['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        logger.info("Successfully added updated_at column")
+        return df
+
     def save_data(self, df: pd.DataFrame) -> None:
         """
         Saves a DataFrame to a CSV file.
@@ -539,6 +554,7 @@ def main():
     df = cleaner.clean_route_column(df)
     df = cleaner.clean_aircraft_column(df)
     df = cleaner.reorder_columns(df)
+    df = cleaner.add_updated_at_column(df)  
 
     cleaner.save_data(df)
     logger.info("Data cleaning process completed successfully")
