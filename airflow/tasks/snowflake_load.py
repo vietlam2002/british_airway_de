@@ -39,7 +39,7 @@ def map_dtype(dtype):
         return "STRING"
 
 # Tạo câu CREATE TABLE từ dataframe
-table_name = "BRITISH_AIRWAYS_DB.RAW.REVIEWS"
+table_name = "BRITISH_AIRWAYS_DB.RAW.REVIEW"
 columns = ",\n    ".join([
     f"{col} {map_dtype(dtype)}" for col, dtype in df.dtypes.items()
 ])
@@ -49,7 +49,7 @@ cur.execute(create_table_sql)
 
 # Load dữ liệu từ S3
 cur.execute(f"""
-COPY INTO BRITISH_AIRWAYS_DB.RAW.REVIEWS
+COPY INTO BRITISH_AIRWAYS_DB.RAW.REVIEW
 FROM 's3://datalakechat/clean_data.csv'
 CREDENTIALS = (
     AWS_KEY_ID='{access_key}',
