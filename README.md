@@ -1,4 +1,4 @@
-# British Airways Extract-Load Project
+# British Airways Extract-Load
 
 This project implements a modern Extract-Load pipeline for British Airways, designed to process and analyze customer review data from [Airline Quality](https://www.airlinequality.com/airline-reviews/british-airways/). It leverages **Apache Airflow**, **Snowflake**, **AWS S3**, and **Docker** to load data into Snowflake before transformation using dbt.
 
