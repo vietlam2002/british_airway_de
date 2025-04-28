@@ -1,0 +1,113 @@
+# .github/workflows/cicd.yml
+name: British Airways Extract Load Job
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 1'   # every Monday 00:00 UTC
+
+jobs:
+  run-data-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 0️⃣ Checkout repository
+    - name: Checkout repo content
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+    # 1️⃣ Python setup
+    - name: Setup python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: pip
+
+    # 2️⃣ Install dependencies
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install snowflake-connector-python python-dotenv boto3 pandas
+
+    # 3️⃣ Extract
+    - name: Extract data (scrape)
+      run: python airflow/tasks/scraper_extract/scraper.py
+
+    # 4️⃣ Transform
+    - name: Transform data (clean)
+      run: python airflow/tasks/transform/transform.py
+
+    # # 5️⃣ Upload to S3
+    # - name: Upload cleaned data to S3
+    #   env:
+    #     AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     AWS_REGION:            ${{ secrets.AWS_REGION }}
+    #     S3_BUCKET:             ${{ secrets.S3_BUCKET }}
+    #     S3_PREFIX:             ${{ secrets.S3_PREFIX }}
+    #   run: python airflow/tasks/upload_to_s3.py
+
+    # # 6️⃣ Load into Snowflake
+    # - name: Load data from S3 into Snowflake
+    #   env:
+    #     SNOWFLAKE_USER:       ${{ secrets.SNOWFLAKE_USER }}
+    #     SNOWFLAKE_PASSWORD:   ${{ secrets.SNOWFLAKE_PASSWORD }}
+    #     SNOWFLAKE_ACCOUNT:    ${{ secrets.SNOWFLAKE_ACCOUNT }}
+    #     SNOWFLAKE_DATABASE:   ${{ secrets.SNOWFLAKE_DATABASE }}
+    #     SNOWFLAKE_SCHEMA:     ${{ secrets.SNOWFLAKE_SCHEMA }}
+    #     SNOWFLAKE_WAREHOUSE:  ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+    #     SNOWFLAKE_ROLE:       ${{ secrets.SNOWFLAKE_ROLE }}
+    #   run: python airflow/tasks/snowflake_load.py
+
+    # 7️⃣ Stage updated artefacts (raw & cleaned)
+    - name: Check for changes
+      id: git-check
+      run: |
+        git config user.name  'github-actions'
+        git config user.email 'github-actions@github.com'
+        git add airflow/data/raw_data.csv airflow/data/cleaned_data.csv || true
+        git diff --staged --quiet || echo "changes=true" >> $GITHUB_ENV
+
+    # 8️⃣ Commit & push back (only on push event to main)
+    - name: Commit and push if changes
+      if: env.changes == 'true' && github.event_name == 'push'
+      env:
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      run: |
+        git commit -m "ci: update raw & cleaned data"
+        git push
+
+    # 9️⃣ Capture timestamp for email
+    - name: Capture timestamp
+      id: timestamp
+      run: echo "time=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+
+    # 🔟 Send email notification
+    - name: Send email notification
+      if: always()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "British Airways Extract-Load Job – ${{ job.status }}"
+        to: minh.b.pham@tcu.edu
+        from: ${{ secrets.EMAIL_USERNAME }}
+        body: |
+          ✈️ **British Airways Extract-Load Job Report** ✈️
+
+          **Run Time:** ${{ steps.timestamp.outputs.time }}
+          **Triggered by:** ${{ github.event_name }}
+          **Status:** ${{ job.status }}
+
+          **Repository:** ${{ github.repository }}
+          **Workflow Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Cheers,  
+          GitHub Actions 🤖
