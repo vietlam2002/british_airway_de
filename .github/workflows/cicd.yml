@@ -74,13 +74,13 @@ jobs:
         git add data/raw_data.csv data/clean_data.csv || true
         git diff --staged --quiet || echo "changes=true" >> $GITHUB_ENV
 
-    # 8️⃣ Commit & push back (only on push event to main)
-    - name: Commit and push if changes
+    # 8️⃣ Commit & push back (always push, but skip further CI)
+    - name: Commit and push (skip CI on new push)
       if: env.changes == 'true' && github.event_name == 'push'
       env:
         GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       run: |
-        git commit -m "ci: Run Schedule Jobs to extract data"
+        git commit -m "ci: update scraped data [skip ci]"
         git push
 
     # 9️⃣ Capture timestamp for email
