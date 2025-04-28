@@ -71,7 +71,7 @@ jobs:
       run: |
         git config user.name  'github-actions'
         git config user.email 'github-actions@github.com'
-        git add airflow/data/raw_data.csv airflow/data/cleaned_data.csv || true
+        git add data/raw_data.csv data/clean_data.csv || true
         git diff --staged --quiet || echo "changes=true" >> $GITHUB_ENV
 
     # 8️⃣ Commit & push back (only on push event to main)
@@ -80,7 +80,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       run: |
-        git commit -m "ci: update raw & cleaned data"
+        git commit -m "ci: Run Schedule Jobs to extract data"
         git push
 
     # 9️⃣ Capture timestamp for email
