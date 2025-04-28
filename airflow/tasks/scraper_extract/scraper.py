@@ -1,9 +1,8 @@
-import os
-import re
+from pathlib import Path
 import logging
 import pandas as pd
 import requests
-from typing import Dict, List
+from typing import Dict
 from bs4 import BeautifulSoup
 
 #Config Logging
@@ -136,9 +135,17 @@ class AirlineReviewScraper:
             df (pd.DataFrame): The DataFrame to save.
             file_path (str): The path where the CSV file will be saved.
         """
-        os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
-        df.to_csv(self.output_path, index=False)
-        logging.info(f"Data saved to {self.output_path}")
+        # os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
+        # df.to_csv(self.output_path, index=False)
+        # logging.info(f"Data saved to {self.output_path}")
+
+        # Adding local save
+        project_root = Path(__file__).resolve().parents[3]
+        data_dir = project_root / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        df.to_csv(data_dir / "raw_data.csv", index=False)
+        logging.info(f"Data saved to {data_dir / "raw_data.csv"}")
 
 if __name__ == "__main__":
     scraper = AirlineReviewScraper(num_pages=30)

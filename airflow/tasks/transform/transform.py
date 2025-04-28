@@ -1,9 +1,10 @@
+from pathlib import Path
 import pandas as pd
 import config as cfg
 import logging
 import re
 import os
-from typing import Dict, Tuple, List, Optional, Union
+from typing import Dict, Tuple, Optional, Union
 
 # Configure logging
 logging.basicConfig(
@@ -526,7 +527,7 @@ class AirlineReviewCleaner:
         logger.info("Successfully added updated_at column")
         return df
 
-    def save_data(self, df: pd.DataFrame) -> None:
+    def save_data(self, df: pd.DataFrame, path: Optional[str] = None) -> None:
         """
         Saves a DataFrame to a CSV file.
 
@@ -534,15 +535,15 @@ class AirlineReviewCleaner:
             df (pd.DataFrame): The DataFrame to save.
             file_path (str): The path where the CSV file will be saved.
         """
-        os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
-        df.to_csv(self.output_path, index=False)
-        logging.info(f"Data saved to {self.output_path}")
+        if path is None:
+            os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
+            path = self.output_path
+        df.to_csv(path)
+        logging.info(f"Data saved to {path}")
 
-    
 def main():
     cleaner = AirlineReviewCleaner()
     df = cleaner.load_data()
-
     df = cleaner.rename_columns(df)
     df = cleaner.clean_date_submitted_column(df)
     df = cleaner.clean_nationality_column(df)
@@ -555,9 +556,28 @@ def main():
     df = cleaner.clean_aircraft_column(df)
     df = cleaner.reorder_columns(df)
     df = cleaner.add_updated_at_column(df)  
-
     cleaner.save_data(df)
-    logger.info("Data cleaning process completed successfully")
+    logger.info("Data cleaning process completed successfully, Data saved to Airflow Dir")
+
+    project_root = Path(__file__).resolve().parents[3]
+    data_dir = project_root / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    df = cleaner.load_data(data_dir / "raw_data.csv")
+    df = cleaner.rename_columns(df)
+    df = cleaner.clean_date_submitted_column(df)
+    df = cleaner.clean_nationality_column(df)
+    df = cleaner.create_verify_column(df)
+    df = cleaner.clean_review_body(df)
+    df = cleaner.clean_date_flown_column(df)
+    df = cleaner.clean_recommended_column(df)
+    df = cleaner.clean_rating_columns(df)
+    df = cleaner.clean_route_column(df)
+    df = cleaner.clean_aircraft_column(df)
+    df = cleaner.reorder_columns(df)
+    df = cleaner.add_updated_at_column(df)  
+    cleaner.save_data(df, data_dir / "clean_data.csv")
+    logger.info("Data cleaning process completed successfully, Data saved to Data Dir")
 
 if __name__ == '__main__':
     main()
