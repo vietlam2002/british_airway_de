@@ -30,40 +30,47 @@ class AirlineReviewScraper:
         self.reviews_data = []
     
     def scrape(self) -> pd.DataFrame:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Connection": "keep-alive",
-            "Referer": "https://www.google.com/"
-        }
+            user_agents = [
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15"
+            ]
 
-        for page in range(1, self.num_pages + 1):
-            logging.info(f"Scraping page {page}...")
-            url = f"{self.BASE_URL}/page/{page}/?sortby=post_date%3ADesc&pagesize={self.PAGE_SIZE}"
+            for page in range(1, self.num_pages + 1):
+                headers = {
+                    "User-Agent": random.choice(user_agents),
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Connection": "keep-alive",
+                    "Referer": "https://www.google.com/"
+                }
 
-            try:
-                response = requests.get(url, headers=headers, timeout=10)
-                response.raise_for_status()
-            except requests.RequestException as e:
-                logging.error(f"Failed to fetch page {page}: {e}")
-                continue
+                logging.info(f"Scraping page {page} with User-Agent: {headers['User-Agent']}")
+                url = f"{self.BASE_URL}/page/{page}/?sortby=post_date%3ADesc&pagesize={self.PAGE_SIZE}"
 
-            soup = BeautifulSoup(response.content, "html.parser")
-            reviews = soup.select('article[class*="comp_media-review-rated"]')
+                try:
+                    response = requests.get(url, headers=headers, timeout=10)
+                    response.raise_for_status()
+                except requests.RequestException as e:
+                    logging.error(f"Failed to fetch page {page}: {e}")
+                    continue
 
-            for review in reviews:
-                review_data = self.extract_review_data(review)
-                if review_data:
-                    self.reviews_data.append(review_data)
+                soup = BeautifulSoup(response.content, "html.parser")
+                reviews = soup.select('article[class*="comp_media-review-rated"]')
 
-            # Optional: Mimic human behavior in CI/CD
-            time.sleep(random.uniform(1.5, 3.0))
+                for review in reviews:
+                    review_data = self.extract_review_data(review)
+                    if review_data:
+                        self.reviews_data.append(review_data)
 
-        df = pd.DataFrame(self.reviews_data)
-        self.save_to_csv(df)
-        return df
+                time.sleep(random.uniform(1.5, 10.0))
 
+            df = pd.DataFrame(self.reviews_data)
+            self.save_to_csv(df)
+            return df
+    
     def extract_review_data(self, review: BeautifulSoup) -> Dict[str, str]:
         """
         Extracts relevant data from a single review.
